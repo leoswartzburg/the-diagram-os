@@ -1,0 +1,385 @@
+@import "tailwindcss";
+/* Global styles. Mobile responsive lives in the `@media (max-width: 767px)` block below
+   (single-column dashboard, bottom tab bar, and the Chat⇄Workspace swipe pager). */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #03030A;
+  color: #fff;
+  font-family: var(--font-space-grotesk), sans-serif;
+  overflow-x: hidden;
+  /* Allow vertical scroll but disable pinch-zoom / horizontal-gesture scaling. */
+  touch-action: pan-y;
+}
+
+/* iOS Safari auto-zooms when a focused input's font-size is below 16px. Forcing
+   16px on every editable control on mobile removes the trigger entirely. */
+@media (max-width: 768px) {
+  input, textarea, select, [contenteditable] {
+    font-size: 16px !important;
+  }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+@keyframes spin-slow-tilt {
+  from { transform: rotateZ(0deg) rotateX(72deg); }
+  to   { transform: rotateZ(360deg) rotateX(72deg); }
+}
+@keyframes spin-reverse-tilt {
+  from { transform: rotateZ(360deg) rotateX(60deg) rotateY(15deg); }
+  to   { transform: rotateZ(0deg) rotateX(60deg) rotateY(15deg); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.85; filter: brightness(1); }
+  50%       { opacity: 1;    filter: brightness(1.25); }
+}
+@keyframes pulse-active {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.08); opacity: 0.9; }
+}
+@keyframes ping-slow {
+  0%   { transform: scale(1);   opacity: 0.4; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0.4; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scan-line {
+  0%   { top: -4px; }
+  100% { top: 100%; }
+}
+/* Circuit-board DAG (Max research): traveling pulse along a dependency connection, node spinner, and
+   the amber running-node glow. */
+@keyframes dagDash      { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+@keyframes dagSpin      { to { transform: rotate(360deg); } }
+@keyframes dagGlowPulse { from { filter: drop-shadow(0 0 2px rgba(245,158,11,0.75)); } to { filter: drop-shadow(0 0 9px rgba(245,158,11,0.95)); } }
+
+.animate-pulse-glow  { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-pulse-active{ animation: pulse-active 1s ease-in-out infinite; }
+.animate-fadeIn      { animation: fadeIn 0.4s ease both; }
+.animate-slideUp     { animation: slideUp 0.5s ease both; }
+.animate-slideInRight{ animation: slideInRight 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Persistent chat session list — subtle hover lift (matches the dark aesthetic) */
+.session-row:hover { background: rgba(255,255,255,0.04) !important; }
+.session-new:hover { background: rgba(255,255,255,0.04) !important; }
+
+/* Calendar month ↔ day drill-down transitions */
+@keyframes calDrillIn   { from { opacity: 0; transform: translateX(20px); }  to { opacity: 1; transform: translateX(0); } }
+@keyframes calDrillBack { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+.animate-cal-drill-in   { animation: calDrillIn 0.32s ease both; }
+.animate-cal-drill-back { animation: calDrillBack 0.32s ease both; }
+
+/* Gym arm — day ↔ block-subpage drill-down (reuses the calendar slide feel) */
+.animate-wk-drill-in   { animation: calDrillIn 0.32s ease both; }
+.animate-wk-drill-back { animation: calDrillBack 0.32s ease both; }
+
+/* Rest timer: flashes electric blue when the countdown hits zero. */
+@keyframes restFlash {
+  0%, 100% { background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.4); box-shadow: none; }
+  50%       { background: rgba(14,165,233,0.55); border-color: #0EA5E9; box-shadow: 0 0 18px rgba(14,165,233,0.8); }
+}
+.rest-flash { animation: restFlash 0.6s ease-in-out 6; }
+
+/* Workout block being dragged / selected for a tap-to-swap reorder. */
+.wk-block-dragging { opacity: 0.45; }
+.wk-block-selected { border-color: #0EA5E9 !important; box-shadow: 0 0 0 1px #0EA5E9, 0 0 14px rgba(14,165,233,0.45); }
+
+/* Orb state animations */
+@keyframes pulse-speaking {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.12); }
+}
+@keyframes pulse-thinking {
+  0%, 100% { filter: brightness(1);    }
+  20%       { filter: brightness(0.55); }
+  55%       { filter: brightness(1.35); }
+  80%       { filter: brightness(0.75); }
+}
+/* Listening (voice mode): the core breathes inward, drawing in to receive. */
+@keyframes pulse-listening {
+  0%, 100% { transform: scale(1);    filter: brightness(1.05); }
+  50%       { transform: scale(0.9); filter: brightness(0.85); }
+}
+/* Reconfiguring (voice failover): slow deliberate amber pulse — adapting, not breaking. */
+@keyframes pulse-reconfig {
+  0%, 100% { transform: scale(1);     filter: brightness(0.9);  }
+  50%       { transform: scale(1.04); filter: brightness(1.25); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.3); border-radius: 2px; }
+
+/* Spectre markdown renderer — accent color supplied via --md-accent CSS var */
+.spectre-md { font-size: 13px; line-height: 1.68; color: rgba(255,255,255,0.88); }
+.spectre-md p  { margin: 0 0 7px; }
+.spectre-md p:last-child { margin-bottom: 0; }
+.spectre-md h1 { font-size: 15px; font-weight: 700; margin: 12px 0 5px; letter-spacing: 0.06em; color: var(--md-accent, #0EA5E9); }
+.spectre-md h2 { font-size: 13px; font-weight: 700; margin: 10px 0 4px; letter-spacing: 0.04em; color: var(--md-accent, #0EA5E9); }
+.spectre-md h3 { font-size: 12px; font-weight: 700; margin: 8px 0 4px; letter-spacing: 0.03em; color: var(--md-accent, #0EA5E9); }
+.spectre-md strong { color: rgba(255,255,255,0.97); font-weight: 700; }
+.spectre-md em { color: rgba(255,255,255,0.68); font-style: italic; }
+.spectre-md hr { border: none; border-top: 0.5px solid rgba(255,255,255,0.1); margin: 10px 0; }
+.spectre-md blockquote { border-left: 2px solid var(--md-accent, #0EA5E9); padding-left: 12px; margin: 8px 0; color: rgba(255,255,255,0.58); font-style: italic; }
+.spectre-md ul { list-style: none; padding: 0; margin: 4px 0 8px; display: flex; flex-direction: column; gap: 3px; }
+.spectre-md ol { padding-left: 18px; margin: 4px 0 8px; display: flex; flex-direction: column; gap: 3px; }
+.spectre-md ol li { list-style: decimal; padding-left: 2px; }
+.spectre-md pre {
+  background: rgba(0,0,0,0.48);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.82);
+}
+.spectre-md pre code {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  color: rgba(255,255,255,0.82) !important;
+  font-size: 11px;
+}
+/* Markdown tables — readable in a narrow chat column: the wrapper scrolls horizontally,
+   headers never wrap, and cells keep a sensible min width so text wraps at words not letters. */
+.spectre-md .md-table-wrap { overflow-x: auto; max-width: 100%; margin: 8px 0; }
+.spectre-md table { border-collapse: collapse; min-width: 100%; font-size: 12px; }
+.spectre-md th, .spectre-md td {
+  border: 0.5px solid rgba(255,255,255,0.15);
+  padding: 5px 9px; text-align: left; vertical-align: top; line-height: 1.45;
+}
+.spectre-md td { min-width: 64px; }
+.spectre-md th { background: rgba(255,255,255,0.05); font-weight: 700; white-space: nowrap; }
+
+/* ── Voice mode ──────────────────────────────────────────────── */
+@keyframes voice-orb-breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
+}
+.voice-orb-breathe { animation: voice-orb-breathe 3.5s ease-in-out infinite; }
+.voice-dim { opacity: 0.3; transition: opacity 0.5s ease; }
+.voice-dim:hover { opacity: 1; }
+
+/* ── Bento Arm drag handle (Core/Arms/Hands tree) ──────────────── */
+/* The 6-dot grip is hidden until hover on desktop; always visible on touch devices. */
+.arm-grip { opacity: 0; transition: opacity 0.15s ease; }
+.arm-tile:hover .arm-grip { opacity: 0.5; }
+.arm-grip:hover { opacity: 0.9 !important; }
+.arm-grip:active { cursor: grabbing; }
+@media (hover: none) {
+  .arm-grip { opacity: 0.5; }
+}
+
+/* "+ New Arm" placeholder tile — dashed, brightens on hover. */
+.new-arm-tile:hover { border-color: rgba(255,255,255,0.25) !important; color: rgba(255,255,255,0.55) !important; }
+
+/* Project card ⋮ menu (Projects overview) — hidden until card hover on desktop. */
+.project-card-menu { opacity: 0; transition: opacity 0.15s ease; }
+.project-card:hover .project-card-menu { opacity: 1; }
+@media (hover: none) {
+  .project-card-menu { opacity: 1; }
+}
+
+/* Session-layer header export icon — subtle reveal on header hover. */
+.header-export:hover { color: rgba(255,255,255,0.75) !important; }
+
+/* ── Mobile responsive ─────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Prevent any content from overflowing the viewport width — box-sizing ensures
+     padding never adds to an element's rendered width, so nothing pokes past the
+     right edge even with fixed paddings. touch-action: pan-y already disables
+     horizontal scroll, so overflow-x: hidden is the safety net. */
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+  }
+  * { box-sizing: border-box; max-width: 100%; }
+
+  /* Header — compact on mobile (the Orderly/Creative/Abstract switcher was removed). */
+  .app-header {
+    padding: 8px 14px !important;
+    min-height: unset;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 4px 12px !important;
+  }
+  .header-title { font-size: 11px; }
+
+  /* Main — allow vertical scroll on mobile */
+  .app-main { overflow-y: auto !important; overflow-x: hidden !important; }
+
+  /* V4 canvas on mobile — the grid restacks to a single column via the dash-canvas
+     <style> @media; here we just let it scroll and tighten padding. (The old
+     .dashboard-grid / .col-* / .mobile-tab-* rules are gone with the 3-column layout.) */
+  .dash-canvas { overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+  .dash-canvas .lab-main { padding: 12px 14px 24px !important; }
+
+  /* Folder / project split views — full-screen swipe pager (Chat ⇄ Workspace).
+     The wrapper is a bounded flex column (no page scroll). .split-panels is a TRANSFORM
+     pager (NOT native scroll): the first pane carries margin-left = -100% per pane + the live
+     drag delta, driven by the --pane / --drag CSS vars set in page.tsx. Axis-locked touch
+     handling means a vertical swipe only scrolls the pane and the pager shifts horizontally
+     only on a deliberate horizontal swipe — no sideways wiggle or rubber-band. A tiny pane
+     indicator (.mobile-pane-tabs) + swipe move between panes. Focus mode stacks instead. */
+  .folder-view-wrapper {
+    overflow: hidden !important;
+    padding: 7px 7px 0 !important;
+  }
+  .split-panels:not(.nb-focus-layout) {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+  .split-panels:not(.nb-focus-layout) > .split-chat,
+  .split-panels:not(.nb-focus-layout) > .split-detail {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+  /* The first pane carries the pager offset: -100% per pane + the live horizontal drag. */
+  .split-panels:not(.nb-focus-layout) > .split-chat {
+    margin-left: calc(var(--pane, 0) * -100% + var(--drag, 0px)) !important;
+    transition: margin-left 0.34s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: margin-left;
+    padding: 11px !important;
+  }
+  .split-panels.swipe-dragging > .split-chat { transition: none !important; }
+  /* Focus mode (notebook editor) — stack vertically on mobile rather than swipe. */
+  .split-panels.nb-focus-layout {
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+  .split-panels.nb-focus-layout > * {
+    flex: 1 1 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+  }
+  /* Tiny Chat ⇄ Workspace pane indicator — hidden on desktop via inline display:none. */
+  .mobile-pane-tabs { display: flex !important; }
+
+  /* Mobile bottom tab bar */
+  .mobile-tab-bar { display: flex !important; }
+
+  /* Footer hidden on mobile — tab bar replaces it */
+  .app-footer { display: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   DOCU-SCAPE — Notebooks editor, ghost text, thought bubbles, focus mode, print
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Library cards lift slightly on hover. */
+.nb-card:hover { transform: translateY(-2px); border-color: rgba(29,158,117,0.5) !important; }
+.nb-toolbtn:hover { background: rgba(255,255,255,0.07) !important; }
+
+/* Sliding editor reveal (Sources slides away → editor expands + fades). */
+@keyframes nbExpand { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.nb-editor-expand { animation: nbExpand 0.3s ease both; }
+
+/* Writing surface — slightly lighter than the panel, comfortable measure, Space Grotesk. */
+/* ── Docu-scape editor — white Google-Docs page on a neutral canvas ──────────── */
+.nb-editor-print { background: #181a23; }
+.nb-prose {
+  max-width: 900px; margin: 24px auto; padding: 54px 88px 88px;
+  background: #ffffff; color: #202124; border-radius: 2px;
+  box-shadow: 0 1px 12px rgba(0,0,0,0.45);
+  font-size: 15px; line-height: 1.55; min-height: 560px; outline: none;
+}
+.nb-prose:focus { outline: none; }
+.nb-prose ::selection { background: rgba(26,115,232,0.18); }
+.nb-prose p { margin: 0 0 8px; }
+.nb-prose h1 { font-size: 1.7em; font-weight: 500; color: #1a1a1a; margin: 16px 0 6px; line-height: 1.25; }
+.nb-prose h2 { font-size: 1.4em; font-weight: 500; color: #1a1a1a; margin: 14px 0 5px; line-height: 1.3; }
+.nb-prose h3 { font-size: 1.18em; font-weight: 500; color: #1a1a1a; margin: 12px 0 4px; }
+.nb-prose ul, .nb-prose ol { padding-left: 1.5em; margin: 0 0 8px; }
+.nb-prose li { margin: 3px 0; }
+.nb-prose a { color: #1558d6; text-decoration: underline; }
+.nb-prose mark { background: #fff2a8; color: #1a1a1a; border-radius: 2px; padding: 0 2px; }
+.nb-prose blockquote { border-left: 3px solid #c8ccd1; margin: 0 0 8px; padding: 2px 0 2px 14px; color: #5f6368; }
+.nb-prose pre { background: #f5f6f8; border: 0.5px solid #e2e4e8; border-radius: 6px; padding: 12px 14px; margin: 0 0 8px; overflow-x: auto; }
+.nb-prose pre code { font-family: monospace; font-size: 13px; color: #202124; }
+.nb-prose code { font-family: monospace; font-size: 0.9em; background: #f0f1f3; color: #b1331e; border-radius: 4px; padding: 1px 4px; }
+.nb-prose hr { border: none; border-top: 1px solid #d8dade; margin: 1.2em 0; }
+/* Math (KaTeX) — display blocks scroll horizontally if an equation is wide; inline sits in text. */
+.nb-prose .nb-math-block { overflow-x: auto; overflow-y: hidden; margin: 0.6em 0; }
+.nb-prose .nb-math-block .katex-display { margin: 0; }
+.nb-prose .nb-math-inline { display: inline-block; }
+/* Task list checkboxes. */
+.nb-prose ul[data-type="taskList"] { list-style: none; padding-left: 0.2em; }
+.nb-prose ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 8px; }
+.nb-prose ul[data-type="taskList"] li > label { margin-top: 3px; }
+.nb-prose ul[data-type="taskList"] input[type="checkbox"] { accent-color: #1a73e8; width: 15px; height: 15px; }
+/* Tables — light borders, subtle header row. */
+.nb-prose table { border-collapse: collapse; width: 100%; margin: 0 0 10px; }
+.nb-prose th, .nb-prose td { border: 1px solid #d2d4d8; padding: 6px 9px; text-align: left; }
+.nb-prose th { background: #f4f5f7; font-weight: 600; }
+.nb-prose .selectedCell { background: rgba(26,115,232,0.12); }
+/* Inline images (paste / drag-drop). */
+.nb-prose img { max-width: 100%; height: auto; border-radius: 4px; margin: 6px 0; display: block; }
+.nb-prose img.ProseMirror-selectednode { outline: 2px solid #1a73e8; outline-offset: 2px; }
+.nb-editor-print .nb-prose img { max-width: 100% !important; }
+/* Placeholder text in an empty editor. */
+.nb-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder); float: left; height: 0; pointer-events: none;
+  color: #9aa0a6;
+}
+/* On phones the page fills the pane — lighter margins, no shadow. */
+@media (max-width: 767px) {
+  .nb-prose { max-width: 100%; margin: 0; padding: 22px 18px 52px; box-shadow: none; border-radius: 0; min-height: 100%; }
+  .nb-editor-print { background: #ffffff; }
+}
+
+/* Ghost (AI) completion decoration — readable blue on the white page. */
+.nb-ghost { color: #1a73e8; opacity: 0.5; }
+
+/* Thought bubble card. */
+.nb-bubble {
+  background: rgba(10,14,32,0.98); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+}
+
+/* Focus mode — hover-reveal the toolbar so the editor is unobstructed while writing. */
+.nb-focus-editor .nb-toolbar { opacity: 0.25; transition: opacity 0.25s ease; }
+.nb-focus-editor:hover .nb-toolbar { opacity: 1; }
+
+/* PDF export via print — show only the writing surface, white on black-text. */
+@media print {
+  body * { visibility: hidden !important; }
+  .nb-editor-print, .nb-editor-print * { visibility: visible !important; }
+  .nb-editor-print { position: absolute; left: 0; top: 0; width: 100%; overflow: visible !important; background: #fff !important; }
+  .nb-editor-print .nb-prose { color: #000 !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; min-height: 0 !important; }
+  .nb-editor-print .nb-prose a { color: #06c !important; }
+  .nb-editor-print .nb-ghost { display: none !important; }
+  html, body { background: #fff !important; }
+}

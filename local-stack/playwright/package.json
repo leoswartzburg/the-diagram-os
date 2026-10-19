@@ -1,0 +1,10 @@
+{
+  "name": "diagram-playwright-fetch",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Headless-browser full-page content fetch service for the deep-research pipeline",
+  "dependencies": {
+    "playwright": "1.49.0"
+  }
+}

@@ -1,0 +1,112 @@
+services:
+  mem0:
+    build:
+      context: ./mem0
+      dockerfile: Dockerfile
+    container_name: mem0
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: mem0-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # Local TTS — Chatterbox TTS Server (voice cloning), the primary local engine
+  # (/api/tts LOCAL → chatterbox → cartesia cloud fallback).
+  # Blackwell GPUs (RTX 50-series, sm_120) requires the CUDA 12.8 image, so we build
+  # from the repo's Dockerfile.cu128. The build context is the cloned source at
+  # ./chatterbox-tts-server (gitignored — clone it before `docker compose up`).
+  # OpenAI-compatible endpoint exposed on :8004, web UI for voice cloning at
+  # http://localhost:8004 (cloned voice saved as "spectre").
+  chatterbox:
+    build:
+      context: ./chatterbox-tts-server
+      dockerfile: Dockerfile.cu128
+      args:
+        RUNTIME: nvidia
+    image: chatterbox-tts-server:cu128
+    container_name: chatterbox-tts-server
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./chatterbox-tts-server/model_cache:/app/model_cache
+      - ./chatterbox-tts-server/reference_audio:/app/reference_audio
+      - ./chatterbox-tts-server/outputs:/app/outputs
+      - ./chatterbox-tts-server/voices:/app/voices
+      - ./chatterbox-tts-server/logs:/app/logs
+      - ./chatterbox-tts-server/config.yaml:/app/config.yaml
+      - ~/.cache/huggingface:/app/hf_cache
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Local STT — Faster-Whisper large-v3-turbo (GPU, float16 — the only compute
+  # type that works on Blackwell/sm_120). OpenAI-compatible transcription
+  # endpoint on :8005; /api/stt tries this first, falls back to Groq cloud.
+  whisper:
+    build:
+      context: ./local-stack/whisper
+    image: diagram-whisper:latest
+    container_name: diagram-whisper
+    ports:
+      - "8005:8005"
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # Full-content fetch for deep research — headless Chromium (Playwright). Tavily discovers URLs;
+  # this fetches the full readable text of each page (JS-rendered, dynamic content) so research
+  # agents synthesize from whole articles, not snippets. CPU-only; POST /fetch on :8009.
+  # Used only by Deep + Exhaustive research modes (Quick stays on Tavily snippets).
+  playwright:
+    build:
+      context: ./local-stack/playwright
+    image: diagram-playwright:latest
+    container_name: diagram-playwright
+    ports:
+      - "8009:8009"
+    shm_size: "1gb"   # Chromium stability under parallel page loads
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:

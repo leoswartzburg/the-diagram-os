@@ -1,0 +1,65 @@
+# Environment
+.env
+.env.local
+.env*.local
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# OS
+.DS_Store
+
+# Google Calendar OAuth token (refresh + access token — never commit)
+.gcal-token.json
+.gcal-token*.json
+
+# Voice failover event log
+failover.log
+
+# Dev server output
+dev-server.log
+
+# Gym arm — master workout file + derived exercise library (source of truth, local only)
+workouts.json
+exercises.json
+
+# Oura Ring (OAuth token, cached snapshot, history, webhook state — never commit)
+.oura-token.json
+.oura-cache.json
+.oura-history.json
+.oura-webhooks.json
+
+# Chatterbox TTS Server (cloned build context — populate via: git clone https://github.com/devnen/Chatterbox-TTS-Server.git chatterbox-tts-server)
+chatterbox-tts-server/
+
+# Project Hand source files (uploaded reference files — local only)
+the-diagram-files/
+
+# Local LLM runtime — llama.cpp binaries + GGUF weights (re-fetch via
+# local-stack/llm/README.md; the launcher + template + README ARE committed)
+local-stack/llm/bin/
+local-stack/llm/models/
+
+
+# Persistent chat sessions — SQLite store (source of truth, local only) + WAL sidecars
+conversations.db
+conversations.db-journal
+conversations.db-wal
+conversations.db-shm
+the-diagram.db
+the-diagram.db-journal
+the-diagram.db-wal
+the-diagram.db-shm
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
